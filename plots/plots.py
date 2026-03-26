@@ -1,5 +1,5 @@
 # Evaluate generate metrics for desingated proteins
-from src.pipeline.runner import Runner
+# from src.pipeline.runner import Runner
 import pandas as pd
 
 import os
@@ -186,64 +186,6 @@ sns.barplot(x=feature_types, y=feature_type_percentages, ax=ax)
 plt.title('Percentages of Features by Type')
 plt.savefig(f'{plot_dir}/percentages_of_features_by_type_barplot.png')
 plt.close()
-
-scores = pd.read_csv(f'{working_dir}/4LDE_features.csv')
-metadata = pd.read_csv(f'{working_dir}/4LDE_metadata.csv')
-# Generate chimerax file for SASA
-output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
-output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'sasa']]
-output_df = output_df.loc[output_df.resi_struct.notna(), :]
-create_chimerax_file(output_df=output_df,
-                    output_dir=f'{plot_dir}',
-                    attribute_name='sasa',
-                    descriptive_text='SASA')
-
-# generate chimerax file for secondary structure
-output_df = metadata.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
-output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'ss_group']]
-output_df = output_df.loc[output_df.resi_struct.notna(), :]
-output_df.loc[output_df.ss_group.str.contains('c'), 'ss_group'] = 'c'
-output_df.loc[output_df.ss_group.str.contains('b'), 'ss_group'] = 'b'
-output_df.loc[output_df.ss_group.str.contains('a'), 'ss_group'] = 'a'
-mapping = {'a': 1, 'b': 2, 'c': 3}
-output_df['ss_group'] = output_df['ss_group'].map(mapping)
-create_chimerax_file(output_df=output_df,
-                    output_dir=f'{plot_dir}',
-                    attribute_name='ss_group',
-                    descriptive_text='Secondary Structure')
-
-# Generate chimerax file for distance from membrane edge
-output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
-output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'distance_from_membrane_edge']]
-output_df = output_df.loc[output_df.resi_struct.notna(), :]
-create_chimerax_file(output_df=output_df,
-                    output_dir=f'{plot_dir}',
-                    attribute_name='distance_from_membrane_edge',
-                    descriptive_text='Distance from Membrane Edge')
-
-
-# Generate chimerax file for packing density
-output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
-output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'packing_contact_density']]
-output_df = output_df.loc[output_df.resi_struct.notna(), :]
-create_chimerax_file(output_df=output_df,
-                    output_dir=f'{plot_dir}',
-                    attribute_name='packing_contact_density',
-                    descriptive_text='Packing Contact Density')
-
-# Generate chimerax file for ligand_A_1403_1WV_interactions
-output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
-output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'ligand_A_1403_1WV_interactions']]
-output_df = output_df.loc[output_df.resi_struct.notna(), :]
-output_df['ligand_numeric'] = 0
-output_df.loc[output_df['ligand_A_1403_1WV_interactions'] == 'contact', 'ligand_numeric'] = 1
-output_df.loc[output_df['ligand_A_1403_1WV_interactions'] == 'binding site', 'ligand_numeric'] = 2
-output_df.loc[output_df['ligand_A_1403_1WV_interactions'] == 'second shell', 'ligand_numeric'] = 3
-create_chimerax_file(output_df=output_df,
-                    output_dir=f'{plot_dir}',
-                    attribute_name='ligand_numeric',
-                    descriptive_text='Ligand A 1403 1WV Interactions')
-
 
 
 # Figure 3
