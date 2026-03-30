@@ -189,25 +189,6 @@ plt.close()
 
 
 # Figure 3
-# create heatmap of effect by mutation at each position
-fig, ax = plt.subplots(figsize=(20, 10))
-sns.heatmap(scores.pivot(index='resm', columns='resi_mut', values='effect'), ax=ax, cmap='RdBu_r')
-plt.savefig(f'{working_dir}/effect_heatmap.png')
-plt.close()
-
-# Plot boxplot showing distance to nearest surface residue for each effect quartile
-fig, ax = plt.subplots(figsize=(20, 10))
-order = ['Q1', 'Q2', 'Q3', 'Q4']
-sns.boxplot(x='effect_quartile', y='distance_to_nearest_surface_residue', data=scores, ax=ax, order=order)
-plt.savefig(f'{working_dir}/distance_to_nearest_surface_residue_boxplot.png')
-plt.close()
-
-# Plot boxplot showing distance from membrane center for each effect quartile
-fig, ax = plt.subplots(figsize=(20, 10))
-order = ['Q1', 'Q2', 'Q3', 'Q4']
-sns.boxplot(x='effect_quartile', y='distance_from_membrane_edge', data=scores, ax=ax, order=order)
-plt.savefig(f'{working_dir}/distance_from_membrane_edge_boxplot.png')
-plt.close()
 
 position_scores = scores.drop_duplicates(subset=['resi_mut', 'resn_mut'])
 # Generate stacked bar showing proportion of residues in each wildtype_aa_group by effect quartile
@@ -216,8 +197,9 @@ fig, ax = plt.subplots(figsize=(20, 10))
 order = ['Q1', 'Q2', 'Q3', 'Q4']
 sns.barplot(x='effect_quartile', y='proportion', data=wildtype_aa_group_proportions, ax=ax, order=order, hue='wildtype_aa_group')
 plt.title('Proportion of residues in each wildtype_aa_group by effect quartile')
-plt.savefig(f'{working_dir}/wildtype_aa_group_by_effect_quartile_stacked_bar.png')
+plt.savefig(f'{plot_dir}/wildtype_aa_group_by_effect_quartile_stacked_bar.png')
 plt.close()
+
 
 # Show location of Q1, Q2, Q3, Q4 positions on the structure
 output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
@@ -227,7 +209,7 @@ numeric_dict = {'Q1': 4, 'Q2': 3, 'Q3': 2, 'Q4': 1}
 output_df['effect_quartile'] = output_df['effect_quartile'].map(numeric_dict).fillna(5)
 
 create_chimerax_file(output_df=output_df,
-                    output_dir=f'{working_dir}',
+                    output_dir=f'{plot_dir}',
                     attribute_name='effect_quartile',
                     descriptive_text='Numeric Effect Quartile')
 
@@ -236,7 +218,7 @@ output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'
 output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'effect']]
 output_df = output_df.loc[output_df.resi_struct.notna(), :]
 create_chimerax_file(output_df=output_df,
-                    output_dir=f'{working_dir}',
+                    output_dir=f'{plot_dir}',
                     attribute_name='effect',
                     descriptive_text='Effect')
 
@@ -246,7 +228,7 @@ output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'
 output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'effect_variance_rank']]
 output_df = output_df.loc[output_df.resi_struct.notna(), :]
 create_chimerax_file(output_df=output_df,
-                    output_dir=f'{working_dir}',
+                    output_dir=f'{plot_dir}',
                     attribute_name='effect_variance_rank',
                     descriptive_text='Effect Variance Rank')
 
@@ -254,14 +236,14 @@ create_chimerax_file(output_df=output_df,
 fig, ax = plt.subplots(figsize=(20, 10))
 sns.scatterplot(x='distance_from_membrane_edge', y='effect', data=scores, ax=ax)
 plt.title('Distance to Membrane Edge vs Effect')
-plt.savefig(f'{working_dir}/distance_from_membrane_edge_vs_effect_scatterplot.png')
+plt.savefig(f'{plot_dir}/distance_from_membrane_edge_vs_effect_scatterplot.png')
 plt.close()
 
 # kidera factors
 fig, ax = plt.subplots(figsize=(20, 10))
 sns.scatterplot(x='kidera_f1_wt', y='effect', data=scores, ax=ax)
 plt.title('Kidera Factor 1 vs Effect')
-plt.savefig(f'{working_dir}/kidera_f1_wt_vs_effect_scatterplot.png')
+plt.savefig(f'{plot_dir}/kidera_f1_wt_vs_effect_scatterplot.png')
 plt.close()
 
 # kidera factors diff
@@ -275,7 +257,7 @@ for kidera_factor in kidera_factors:
         sns.kdeplot(x=kidera_factor, y='effect', data=ax_df, ax=ax_, alpha=0.5)
         ax_.set_title(f'Effect Quartile {order[i]}')
     fig.suptitle(f'{kidera_factor}')
-    plt.savefig(f'{working_dir}/{kidera_factor}_vs_effect_quartile_kdeplot.png')
+    plt.savefig(f'{plot_dir}/{kidera_factor}_vs_effect_quartile_kdeplot.png')
     plt.close()
 
 
@@ -289,14 +271,14 @@ for kidera_factor_mut in kidera_factors_mut:
         sns.kdeplot(x=kidera_factor_mut, y='effect', data=ax_df, ax=ax_, alpha=0.5)
         ax_.set_title(f'Effect Quartile {order[i]}')
     fig.suptitle(f'{kidera_factor_mut}')
-    plt.savefig(f'{working_dir}/{kidera_factor_mut}_vs_effect_quartile_kdeplot.png')
+    plt.savefig(f'{plot_dir}/{kidera_factor_mut}_vs_effect_quartile_kdeplot.png')
     plt.close()
 
 # plot position effect vs variance
 fig, ax = plt.subplots(figsize=(20, 10))
 sns.scatterplot(x='effect_variance', y='pos_effect', data=position_scores, ax=ax, hue='effect_quartile')
 plt.title('Position Effect vs Variance')
-plt.savefig(f'{working_dir}/pos_effect_vs_variance_scatterplot.png')
+plt.savefig(f'{plot_dir}/pos_effect_vs_variance_scatterplot.png')
 plt.close()
 
 # Generate a heatmap of effects by position by mutation, sorted by effect variance
@@ -309,7 +291,7 @@ heatmap_df = heatmap_df.reindex(columns=resi_mut_order)  # enforce column order
 
 sns.heatmap(heatmap_df, ax=ax, cmap='RdBu_r')
 plt.title('Effects by Position by Mutation, Sorted by Effect Variance')
-plt.savefig(f'{working_dir}/effects_by_position_by_mutation_sorted_by_variance_heatmap.png')
+plt.savefig(f'{plot_dir}/effects_by_position_by_mutation_sorted_by_variance_heatmap.png')
 plt.close()
 
 # identify low variance, Q1 positions, annotate position_scores
@@ -323,7 +305,7 @@ position_scores['variance_cat'] = position_scores['variance_cat'].map(mapping)
 input = position_scores[['chain', 'resi_struct', 'resn_struct', 'variance_cat']]
 input = input.loc[input.resi_struct.notna(), :]
 create_chimerax_file(output_df=input,
-                    output_dir=f'{working_dir}',
+                    output_dir=f'{plot_dir}',
                     attribute_name='variance_cat',
                     descriptive_text='Variance Category')
 
@@ -333,7 +315,7 @@ variance_cat_counts = position_scores.loc[position_scores.variance_cat != 'other
 fig, ax = plt.subplots(figsize=(20, 10))
 sns.barplot(x='wildtype_aa_group', y='count', data=variance_cat_counts, ax=ax, hue='variance_cat')
 plt.title('Variance Category by Wildtype and Mut AA Group')
-plt.savefig(f'{working_dir}/variance_cat_by_wildtype_aa_group_barplot.png')
+plt.savefig(f'{plot_dir}/variance_cat_by_wildtype_aa_group_barplot.png')
 plt.close()
 
 # summarize counts of variance cat by effect quartile
@@ -341,6 +323,5 @@ variance_cat_counts = position_scores.loc[position_scores.variance_cat != 'other
 fig, ax = plt.subplots(figsize=(20, 10))
 sns.barplot(x='effect_quartile', y='count', data=variance_cat_counts, ax=ax, hue='variance_cat')
 plt.title('Variance Category by Effect Quartile')
-plt.savefig(f'{working_dir}/variance_cat_by_effect_quartile_barplot.png')
+plt.savefig(f'{plot_dir}/variance_cat_by_effect_quartile_barplot.png')
 plt.close()
-
