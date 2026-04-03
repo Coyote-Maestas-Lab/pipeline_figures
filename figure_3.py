@@ -4,13 +4,14 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from matplotlib.patches import Patch
 
 # fix matplotlib font issue
 plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['pdf.fonttype'] = 42
-plt.rcParams['ps.fonttype'] = 42
-plt.rcParams['svg.fonttype'] = 'none'
+# plt.rcParams['ps.fonttype'] = 42
+# plt.rcParams['svg.fonttype'] = 'none'
 
 
 def create_chimerax_file(output_df: pd.DataFrame, output_dir: str, attribute_name: str,
@@ -54,7 +55,7 @@ def create_chimerax_file(output_df: pd.DataFrame, output_dir: str, attribute_nam
         for _, row in output_df.iterrows():
             f.write(f"\t/{row.chain}:{int(row.resi_struct)}\t{row[attribute_name]}\n")
 
-plot_dir = '/Users/ngreenwald/Library/CloudStorage/Box-Box/WCM Lab/Noah/feature_pipeline/20260326_fig3'
+plot_dir = '/Users/ngreenwald/Library/CloudStorage/Box-Box/WCM Lab/Noah/feature_pipeline/fig3'
 
 scores_abund = pd.read_csv(f'{plot_dir}/8ET6_OCT1_features.csv')
 metadata = pd.read_csv(f'{plot_dir}/8ET6_OCT1_metadata.csv')
@@ -69,57 +70,29 @@ position_scores['ss_group_simple'] = 'TMD'
 position_scores.loc[position_scores.ss_domains.str.contains('loop'), 'ss_group_simple'] = 'loop'
 position_scores.loc[position_scores.ss_domains.str.contains('sheet'), 'ss_group_simple'] = 'sheet'
 
-
-# create heatmap of abundance by mutation at each position
-mutation_order = ['ALA', 'ILE', 'LEU', 'VAL', 'MET', 'PHE', 'TYR', 'TRP', 'SER', 'THR', 'ASN', 'GLN', 'HIS', 'LYS', 'ARG', 'ASP', 'GLU', 'GLY', 'PRO', 'CYS', 'DEL0']
-
-fig, ax = plt.subplots(figsize=(20, 5))
-heatmap_df = scores_abund.pivot(index='resm', columns='resi_mut', values='effect')
-heatmap_df = heatmap_df.reindex(index=mutation_order)
-sns.heatmap(heatmap_df, ax=ax, cmap='RdBu_r', center=0)
-ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-position_labels = heatmap_df.columns.to_numpy()
-xtick_idx = np.where(position_labels % 20 == 0)[0]
-ax.set_xticks(xtick_idx + 0.5)
-ax.set_xticklabels(position_labels[xtick_idx].astype(int).astype(str), rotation=0)
-ax.tick_params(axis='x', labelsize=11, rotation=0)
-ax.tick_params(axis='y', labelsize=10)
-plt.title('Abundance Effect by Mutation at Each Position')
-plt.savefig(f'{plot_dir}/abundance_heatmap.pdf')
-plt.close()
-
-
-# make a heatmap with key metadata columns to go above effect heatmap
-keep_cols = ['resi_mut', 'ss_domains', 'effect_quartile']
-metadata_heatmap_df = position_scores[keep_cols]
-
-# Create a heatmap of the metadata, with a different color for each row
-meta = metadata_heatmap_df.set_index("resi_mut").loc[position_labels, ["ss_domains","effect_quartile"]]
-
-col_colors = pd.DataFrame(index=meta.index)
-for col in meta.columns:
-    cats = meta[col].astype(str).unique()
-    pal = sns.color_palette("tab10", n_colors=len(cats))
-    lut = dict(zip(cats, pal))
-    col_colors[col] = meta[col].astype(str).map(lut)
-sns.clustermap(
-    heatmap_df,                 # your effect heatmap (numeric)
-    row_cluster=False,
-    col_cluster=False,
-    col_colors=col_colors,    # metadata on top
-    cmap="RdBu_r",
-    center=0
-)
-plt.savefig(f'{plot_dir}/metadata_heatmap.pdf')
-plt.close()
-
-
 # --- Heatmap + metadata strips (self-contained) ---
 mutation_order = [
     "ALA", "ILE", "LEU", "VAL", "MET", "PHE", "TYR", "TRP", "SER", "THR",
     "ASN", "GLN", "HIS", "LYS", "ARG", "ASP", "GLU", "GLY", "PRO", "CYS", "DEL0"
 ]
-meta_cols = ["ss_group_simple", "effect_quartile"]
+meta_cols = ["effect_quartile"]
+heatmap_cmap_name = "bwr_r"
+heatmap_vcenter = 0
+heatmap_vmin = -2
+heatmap_vmax = 0.75
+effect_quartile_order = ['Q1', 'Q2', 'Q3', 'Q4']
+heatmap_cmap = plt.get_cmap(heatmap_cmap_name)
+heatmap_norm = mcolors.TwoSlopeNorm(vmin=heatmap_vmin, vcenter=heatmap_vcenter, vmax=heatmap_vmax)
+
+quartile_sample_values = np.linspace(
+    heatmap_vmin,
+    heatmap_vmax,
+    len(effect_quartile_order),
+)
+effect_quartile_palette = {
+    quartile: heatmap_cmap(heatmap_norm(sample_value))
+    for quartile, sample_value in zip(effect_quartile_order, quartile_sample_values)
+}
 
 # Effect heatmap (rows are mutation types, columns are positions).
 heatmap_df_effect = (
@@ -134,24 +107,23 @@ pos_meta = (
     .reindex(heatmap_df_effect.columns)
 )
 
-# Convert each categorical metadata field into a color strip.
-col_colors = pd.DataFrame(index=pos_meta.index)
-category_to_color = {}
-for col in meta_cols:
-    cats = pos_meta[col].dropna().astype(str).unique().tolist()
-    pal = sns.color_palette("tab10", n_colors=len(cats)) if len(cats) <= 10 else sns.color_palette("husl", n_colors=len(cats))
-    lut = dict(zip(cats, pal))
-    category_to_color[col] = lut
-    col_colors[col] = pos_meta[col].astype(str).map(lut)
+# Convert the single metadata field into a color strip.
+category_to_color = {"effect_quartile": effect_quartile_palette}
+col_colors = pd.DataFrame(
+    {"effect_quartile": pos_meta["effect_quartile"].astype(str).map(effect_quartile_palette)},
+    index=pos_meta.index,
+)
 
 cg = sns.clustermap(
     heatmap_df_effect,
     row_cluster=False,
     col_cluster=False,
     col_colors=col_colors,
-    cmap="RdBu",
-    center=0,
-    figsize=(20, 4)
+    cmap=heatmap_cmap_name,
+    center=heatmap_vcenter,
+    figsize=(20, 4),
+    vmin=heatmap_vmin,
+    vmax=heatmap_vmax
 )
 position_labels = heatmap_df_effect.columns.to_numpy()
 xtick_idx = np.where(position_labels % 20 == 0)[0]
@@ -170,11 +142,10 @@ for field in meta_cols:
         labels.append(f"{field}: {cat}")
 cg.figure.legend(handles, labels, loc="lower left", bbox_to_anchor=(0.02, 0.02), frameon=False, fontsize=8)
 
-cg.savefig(f"{plot_dir}/abundance_heatmap_with_metadata.pdf", bbox_inches="tight")
+cg.savefig(f"{plot_dir}/fig3a_abundance_heatmap_with_metadata.pdf", bbox_inches="tight")
 plt.close(cg.figure)
 
 
-effect_quartile_order = ['Q1', 'Q2', 'Q3', 'Q4']
 position_scores = scores_abund.drop_duplicates(subset=['resi_mut'])
 quartile_positions = position_scores['pos_effect'].quantile([0.25, 0.5, 0.75])
 
@@ -187,17 +158,10 @@ for quartile in quartile_positions:
 # remove upper right hand corner of plot
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
-plt.savefig(f'{plot_dir}/pos_effect_kde.pdf')
+plt.savefig(f'{plot_dir}/fig3b_pos_effect_kde.pdf')
 plt.close()
 
-# Plot boxplot showing abundance effect for positions starting out as negatively charged
-fig, ax = plt.subplots(figsize=(10, 5))
-sns.boxplot(x='mut_aa_group', y='effect', hue='effect_quartile',data=scores_abund.loc[scores_abund.wildtype_aa_group == 'Negatively_Charged', :], ax=ax,
-            hue_order=effect_quartile_order, order=['Aromatic', 'Nonpolar_Aliphatic', 'Special', 'Positively_Charged', 'Polar_Uncharged',  'Negatively_Charged'])
-plt.savefig(f'{plot_dir}/abundance_effect_for_negatively_charged_positions_boxplot.pdf')
-plt.close()
-
-# Show location of Q1, Q2, Q3, Q4 positions on the structure
+# Show location of Q1, Q2, Q3, Q4 positions on the structure for 3c
 output_df = scores_abund.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
 output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'effect_quartile']]
 output_df = output_df.loc[output_df.resi_struct.notna(), :]
@@ -209,20 +173,32 @@ create_chimerax_file(output_df=output_df,
                     attribute_name='effect_quartile',
                     descriptive_text='Numeric Effect Quartile')
 
+# Plot boxplot showing abundance effect for positions starting out as negatively charged
+fig, ax = plt.subplots(figsize=(10, 5))
+sns.boxplot(x='mut_aa_group', y='effect', hue='effect_quartile',data=scores_abund.loc[scores_abund.wildtype_aa_group == 'Negatively_Charged', :], ax=ax,
+            hue_order=effect_quartile_order, palette=effect_quartile_palette,
+            order=['Aromatic', 'Nonpolar_Aliphatic', 'Special', 'Positively_Charged', 'Polar_Uncharged',  'Negatively_Charged'])
+plt.savefig(f'{plot_dir}/fig3d_abundance_effect_for_negatively_charged_positions_boxplot.pdf')
+plt.close()
+
+
+
 # Plot distance to surface residue for Q1, Q2, Q3, Q4 positions
 fig, ax = plt.subplots(figsize=(6, 3))
-sns.violinplot(x='effect_quartile', y='distance_to_nearest_surface_residue', data=position_scores, ax=ax, order=['Q1', 'Q2', 'Q3', 'Q4'])
+sns.violinplot(x='effect_quartile', y='distance_to_nearest_surface_residue', data=position_scores, ax=ax, order=['Q1', 'Q2', 'Q3', 'Q4'],
+hue='effect_quartile', hue_order=effect_quartile_order, palette=effect_quartile_palette)
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
-plt.savefig(f'{plot_dir}/distance_to_surface_residue_for_quartile_positions_violinplot.pdf')
+plt.savefig(f'{plot_dir}/fig3e_distance_to_surface_residue_for_quartile_positions_violinplot.pdf')
 plt.close()
 
 # Plot total bond count across quartiles
 fig, ax = plt.subplots(figsize=(6, 3))
-sns.violinplot(x='effect_quartile', y='total_bond_count', data=position_scores, ax=ax, order=['Q1', 'Q2', 'Q3', 'Q4'])
+sns.violinplot(x='effect_quartile', y='total_bond_count', data=position_scores, ax=ax, order=['Q1', 'Q2', 'Q3', 'Q4'],
+hue='effect_quartile', hue_order=effect_quartile_order, palette=effect_quartile_palette)
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
-plt.savefig(f'{plot_dir}/total_bond_count_for_quartile_positions_violinplot.pdf')
+plt.savefig(f'{plot_dir}/fig3f_total_bond_count_for_quartile_positions_violinplot.pdf')
 plt.close()
 
 # scatterplot of blosum score vs effect
@@ -230,5 +206,5 @@ fig, ax = plt.subplots(figsize=(6, 3))
 sns.boxplot(x='blosum90', y='effect', data=scores_abund, ax=ax)
 ax.spines['right'].set_visible(False)
 ax.spines['top'].set_visible(False)
-plt.savefig(f'{plot_dir}/blosum90_vs_effect_boxplot.pdf')
+plt.savefig(f'{plot_dir}/fig3g_blosum90_vs_effect_boxplot.pdf')
 plt.close()
