@@ -47,7 +47,7 @@ def create_chimerax_file(output_df: pd.DataFrame, output_dir: str, attribute_nam
         for _, row in output_df.iterrows():
             f.write(f"\t/{row.chain}:{int(row.resi_struct)}\t{row[attribute_name]}\n")
 
-plot_dir = '/Users/ngreenwald/Library/CloudStorage/Box-Box/WCM Lab/Noah/feature_pipeline/20260310_fig2'
+plot_dir = '/Users/ngreenwald/Library/CloudStorage/Box-Box/WCM Lab/Noah/feature_pipeline/fig2'
 
 
 scores = pd.read_csv(f'{plot_dir}/5C1M_MOR_features.csv')
@@ -76,24 +76,6 @@ create_chimerax_file(output_df=output_df,
                     attribute_name='ss_group',
                     descriptive_text='Secondary Structure')
 
-# # Generate chimerax file for distance from membrane edge
-# output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
-# output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'distance_from_membrane_edge']]
-# output_df = output_df.loc[output_df.resi_struct.notna(), :]
-# create_chimerax_file(output_df=output_df,
-#                     output_dir=f'{plot_dir}',
-#                     attribute_name='distance_from_membrane_edge',
-#                     descriptive_text='Distance from Membrane Edge')
-
-
-# # Generate chimerax file for packing density
-# output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
-# output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'packing_contact_density']]
-# output_df = output_df.loc[output_df.resi_struct.notna(), :]
-# create_chimerax_file(output_df=output_df,
-#                     output_dir=f'{plot_dir}',
-#                     attribute_name='packing_contact_density',
-#                     descriptive_text='Packing Contact Density')
 
 # Generate chimerax file for ligand_A_1401_P0G_interactions
 output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
@@ -109,6 +91,17 @@ create_chimerax_file(output_df=output_df,
                     descriptive_text='Ligand A 407 VF1 Interactions')
 
 bonds_df = pd.read_csv(f'{plot_dir}/5C1M_MOR_bonds.csv')
-bonds_df = bonds_df.loc[np.logical_and(bonds_df.chain == 'A', bonds_df.protein_protein), :]
-subset = bonds_df.loc[bonds_df.resi_struct.isin(range(319, 334)), :]
+#bonds_df = bonds_df.loc[np.logical_and(bonds_df.chain == 'A', bonds_df.protein_protein), :]
+bonds_df = bonds_df.loc[bonds_df.chain == 'A', :]
+subset = bonds_df.loc[bonds_df.resi_struct.isin(range(146, 148)), :]
 subset = subset.loc[subset.bond_type == 'hbond', :]
+
+
+# Generate chimerax file for kyte_doolittle
+output_df = scores.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])
+output_df = output_df[['chain', 'resi_struct', 'resn_struct', 'kyte_doolittle']]
+output_df = output_df.loc[output_df.resi_struct.notna(), :]
+create_chimerax_file(output_df=output_df,
+                    output_dir=f'{plot_dir}',
+                    attribute_name='kyte_doolittle',
+                    descriptive_text='Kyte Doolittle')
