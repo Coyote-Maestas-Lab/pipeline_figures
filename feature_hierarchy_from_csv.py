@@ -17,7 +17,7 @@ class ClassificationRule:
 
 
 PALETTE = {
-    "Mutation-derived": "#4C78A8",
+    "Sequence-derived": "#4C78A8",
     "Single-residue": "#72B7B2",
     "Interactions": "#F58518",
     "Secondary/Tertiary": "#54A24B",
@@ -40,7 +40,7 @@ METADATA_COLUMNS = {
 
 RULES = [
     ClassificationRule(
-        group="Mutation-derived",
+        group="Sequence-derived",
         subcategory="Mutation effects",
         exact_names=frozenset(
             {
@@ -50,30 +50,40 @@ RULES = [
                 "effect_variance",
                 "effect_variance_rank",
                 "effect_ranking",
+                "avg_effect",
+                "avg_effect_quartile",
+                "mutation_category",
+                "total_lof",
+                "total_gof",
             }
         ),
     ),
     ClassificationRule(
-        group="Mutation-derived",
+        group="Sequence-derived",
         subcategory="Substitution scores",
         exact_names=frozenset({"blosum90", "phat_score"}),
     ),
     ClassificationRule(
-        group="Mutation-derived",
+        group="Sequence-derived",
         subcategory="Amino-acid group labels",
         exact_names=frozenset(
             {"wildtype_aa_group", "mut_aa_group", "wildtype_mut_aa_group"}
         ),
     ),
     ClassificationRule(
-        group="Mutation-derived",
-        subcategory="Kidera descriptors",
+        group="Sequence-derived",
+        subcategory="Kidera factors",
         prefixes=("kidera_",),
     ),
     ClassificationRule(
-        group="Mutation-derived",
+        group="Sequence-derived",
         subcategory="AAIndex descriptors",
-        prefixes=("AAIndex_",),
+        prefixes=("KYTJ820101", "WIMW960101", "ENGD860101", "FAUJ880103", "KLEP840101", "GRAR740102", "CHAM820101", "BHAR880101"),
+    ),
+    ClassificationRule(
+        group="Sequence-derived",
+        subcategory="Sliding window averages",
+        prefixes=("sequence_window_",),
     ),
     ClassificationRule(
         group="Single-residue",
@@ -109,7 +119,7 @@ RULES = [
     ),
     ClassificationRule(
         group="Interactions",
-        subcategory="Aromatic and van der Waals",
+        subcategory="Aromatic and van der Waals contacts",
         exact_names=frozenset(
             {"pi_stacking_count", "cation_pi_count", "vdw_contact_count"}
         ),
@@ -123,7 +133,7 @@ RULES = [
     ),
     ClassificationRule(
         group="Secondary/Tertiary",
-        subcategory="Structure distances",
+        subcategory="Within structure distances",
         exact_names=frozenset(
             {
                 "distance_to_nearest_surface_residue",
@@ -132,21 +142,32 @@ RULES = [
             }
         ),
     ),
+
     ClassificationRule(
-        group="Secondary/Tertiary",
-        subcategory="Secondary-structure labels",
-        exact_names=frozenset({"ss_group", "ss_domains"}),
+        group="Interactions",
+        subcategory="DSSP bond energies",
+        prefixes=("dssp_nh", "dssp_o"),
     ),
     ClassificationRule(
         group="Secondary/Tertiary",
-        subcategory="DSSP descriptors",
-        prefixes=("dssp_",),
+        subcategory="DSSP bond angles",
+        exact_names=frozenset({"dssp_acc", "dssp_tco", "dssp_phi", "dssp_psi", "dssp_kappa", "dssp_alpha"}),
     ),
     ClassificationRule(
         group="Secondary/Tertiary",
-        subcategory="Secondary-structure domain averages",
+        subcategory="Secondary structure descriptors",
         exact_names=frozenset({"ss_domain_length"}),
+        prefixes=("ss_domain_log2",),
+    ),
+    ClassificationRule(
+        group="Secondary/Tertiary",
+        subcategory="Secondary structure feature averages",
         prefixes=("ss_domain_",),
+    ),
+    ClassificationRule(
+        group="Secondary/Tertiary",
+        subcategory="Secondary structure labels",
+        exact_names=frozenset({"ss_group", "ss_domains"}),
     ),
     ClassificationRule(
         group="Secondary/Tertiary",
@@ -155,18 +176,37 @@ RULES = [
     ),
     ClassificationRule(
         group="Secondary/Tertiary",
-        subcategory="Neighborhood summaries",
-        exact_names=frozenset({"n_ala_neighbors"}),
+        subcategory="Neighboring residue counts",
+        exact_names=frozenset({"n_same_chain_neighbors", "n_different_chain_neighbors", "n_neighbors"}),
+    ),
+    ClassificationRule(
+        group="Secondary/Tertiary",
+        subcategory="Neighboring residue diversity",
+        exact_names=frozenset({"neighbor_aa_entropy", "neighbor_aa_group_entropy"}),
+    ),
+    ClassificationRule(
+        group="Secondary/Tertiary",
+        subcategory="Neighborhood secondary structure composition",
+        exact_names=frozenset({"secondary_structure_coarse_entropy", "secondary_structure_granular_entropy", "neighbor_prop_alpha_helix", "neighbor_prop_beta_sheet", "neighbor_prop_coil"}),
+    ),
+    ClassificationRule(
+        group="Secondary/Tertiary",
+        subcategory="Neighborhood feature averages",
         prefixes=("neighborhood_",),
     ),
     ClassificationRule(
         group="Secondary/Tertiary",
-        subcategory="Graph-derived topology",
+        subcategory="Sequence distance of neighboring residues",
+        exact_names=frozenset({"prop_long_range_neighbors", "mean_neighbor_sequence_distance"}),
+    ),
+    ClassificationRule(
+        group="Secondary/Tertiary",
+        subcategory="Graph-based connectivity",
         prefixes=("graph_",),
     ),
     ClassificationRule(
         group="Protein-ligand",
-        subcategory="Ligand interactions",
+        subcategory="Ligand contact definitions",
         prefixes=("ligand_",),
     ),
 ]
@@ -261,9 +301,11 @@ def build_feature_hierarchy_data(
     return assignments_df, counts_df
 
 
+save_dir = '/Users/ngreenwald/Library/CloudStorage/Box-Box/WCM Lab/Noah/feature_pipeline/fig2'
+scores = pd.read_csv(f'{save_dir}/5C1M_features.csv')
 assignments_df, counts_df = build_feature_hierarchy_data(scores, rules=RULES)
 fig, ax = plot_grouped_horizontal_bars(counts_df, title="Feature hierarchy")
 
-save_dir = '/Users/ngreenwald/Library/CloudStorage/Box-Box/WCM Lab/Noah/feature_pipeline/20260310_fig2'
+
 fig.savefig(f'{save_dir}/feature_hierarchy.png')
 plt.close(fig)
