@@ -17,11 +17,11 @@ class ClassificationRule:
 
 
 PALETTE = {
-    "Sequence-derived": "#4C78A8",
-    "Single-residue": "#72B7B2",
-    "Interactions": "#F58518",
-    "Secondary/Tertiary": "#54A24B",
-    "Protein-ligand": "#B279A2",
+    "Mutational effects": "#4C78A8",
+    "Residue context": "#72B7B2",
+    "Residue bonds": "#F58518",
+    "Amino acid sequence-derived": "#54A24B",
+    "Spatial averages": "#F58518",
     "Unclassified": "#9D9D9D",
 }
 
@@ -40,53 +40,61 @@ METADATA_COLUMNS = {
 
 RULES = [
     ClassificationRule(
-        group="Sequence-derived",
-        subcategory="Mutation effects",
+        group="Mutational effects",
+        subcategory="Mutation scores",
         exact_names=frozenset(
             {
+                "avg_effect",
                 "effect",
                 "pos_effect",
+                "mutation_category",
+            }
+        ),
+    ),
+    ClassificationRule(
+        group="Mutational effects",
+        subcategory="Mutation score summaries",
+        exact_names=frozenset(
+            {
                 "effect_quartile",
                 "effect_variance",
                 "effect_variance_rank",
                 "effect_ranking",
-                "avg_effect",
                 "avg_effect_quartile",
-                "mutation_category",
                 "total_lof",
                 "total_gof",
             }
         ),
     ),
     ClassificationRule(
-        group="Sequence-derived",
+        group="Mutational effects",
         subcategory="Substitution scores",
         exact_names=frozenset({"blosum90", "phat_score"}),
     ),
     ClassificationRule(
-        group="Sequence-derived",
-        subcategory="Amino-acid group labels",
+        group="Amino acid sequence-derived",
+        subcategory="Physico-chemical groups",
         exact_names=frozenset(
             {"wildtype_aa_group", "mut_aa_group", "wildtype_mut_aa_group"}
         ),
     ),
     ClassificationRule(
-        group="Sequence-derived",
+        group="Amino acid sequence-derived",
         subcategory="Kidera factors",
         prefixes=("kidera_",),
     ),
     ClassificationRule(
-        group="Sequence-derived",
+        group="Amino acid sequence-derived",
         subcategory="AAIndex descriptors",
         prefixes=("KYTJ820101", "WIMW960101", "ENGD860101", "FAUJ880103", "KLEP840101", "GRAR740102", "CHAM820101", "BHAR880101"),
     ),
     ClassificationRule(
-        group="Sequence-derived",
+        group="Spatial averages",
         subcategory="Sliding window averages",
         prefixes=("sequence_window_",),
     ),
     ClassificationRule(
-        group="Single-residue",
+        group="Residue context",
         subcategory="SASA",
         exact_names=frozenset(
             {
@@ -95,44 +103,40 @@ RULES = [
                 "sasa_sidechain",
                 "sasa_polar",
                 "sasa_nonpolar",
+                "kyte_doolittle",
             }
         ),
     ),
     ClassificationRule(
-        group="Single-residue",
-        subcategory="Hydrophobicity",
-        exact_names=frozenset({"kyte_doolittle"}),
-    ),
-    ClassificationRule(
-        group="Interactions",
+        group="Residue bonds",
         subcategory="Hydrogen bonds",
         exact_names=frozenset(
             {"bb_hbond_count", "sc_hbond_count", "total_hbond_count"}
         ),
     ),
     ClassificationRule(
-        group="Interactions",
+        group="Residue bonds",
         subcategory="Electrostatic and covalent contacts",
         exact_names=frozenset(
             {"salt_bridge_count", "ionic_bond_count", "disulfide_bond_count"}
         ),
     ),
     ClassificationRule(
-        group="Interactions",
+        group="Residue bonds",
         subcategory="Aromatic and van der Waals contacts",
         exact_names=frozenset(
             {"pi_stacking_count", "cation_pi_count", "vdw_contact_count"}
         ),
     ),
     ClassificationRule(
-        group="Interactions",
+        group="Residue bonds",
         subcategory="Aggregate bond summaries",
         exact_names=frozenset(
             {"total_bond_count", "total_within_chain_bonds", "total_between_chain_bonds"}
         ),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue context",
         subcategory="Within structure distances",
         exact_names=frozenset(
             {
@@ -144,72 +148,74 @@ RULES = [
     ),
 
     ClassificationRule(
-        group="Interactions",
+        group="Residue bonds",
         subcategory="DSSP bond energies",
         prefixes=("dssp_nh", "dssp_o"),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue bonds",
         subcategory="DSSP bond angles",
         exact_names=frozenset({"dssp_acc", "dssp_tco", "dssp_phi", "dssp_psi", "dssp_kappa", "dssp_alpha"}),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue context",
         subcategory="Secondary structure descriptors",
         exact_names=frozenset({"ss_domain_length"}),
         prefixes=("ss_domain_log2",),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Spatial averages",
         subcategory="Secondary structure feature averages",
         prefixes=("ss_domain_",),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue context",
         subcategory="Secondary structure labels",
         exact_names=frozenset({"ss_group", "ss_domains"}),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue context",
         subcategory="Packing",
         prefixes=("packing_",),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue context",
         subcategory="Neighboring residue counts",
         exact_names=frozenset({"n_same_chain_neighbors", "n_different_chain_neighbors", "n_neighbors"}),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue context",
         subcategory="Neighboring residue diversity",
         exact_names=frozenset({"neighbor_aa_entropy", "neighbor_aa_group_entropy"}),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue context",
         subcategory="Neighborhood secondary structure composition",
         exact_names=frozenset({"secondary_structure_coarse_entropy", "secondary_structure_granular_entropy", "neighbor_prop_alpha_helix", "neighbor_prop_beta_sheet", "neighbor_prop_coil"}),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Spatial averages",
         subcategory="Neighborhood feature averages",
         prefixes=("neighborhood_",),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue context",
         subcategory="Sequence distance of neighboring residues",
         exact_names=frozenset({"prop_long_range_neighbors", "mean_neighbor_sequence_distance"}),
     ),
     ClassificationRule(
-        group="Secondary/Tertiary",
+        group="Residue bonds",
         subcategory="Graph-based connectivity",
         prefixes=("graph_",),
     ),
     ClassificationRule(
-        group="Protein-ligand",
+        group="Residue bonds",
         subcategory="Ligand contact definitions",
         prefixes=("ligand_",),
     ),
 ]
+
+
 def extract_feature_columns(scores_df: pd.DataFrame) -> list[str]:
     return [
         column
@@ -307,5 +313,5 @@ assignments_df, counts_df = build_feature_hierarchy_data(scores, rules=RULES)
 fig, ax = plot_grouped_horizontal_bars(counts_df, title="Feature hierarchy")
 
 
-fig.savefig(f'{save_dir}/feature_hierarchy.png')
+fig.savefig(f'{save_dir}/feature_hierarchy1.png')
 plt.close(fig)
