@@ -81,18 +81,9 @@ heatmap_vcenter = 0
 heatmap_vmin = -2
 heatmap_vmax = 0.75
 effect_quartile_order = ['Q1', 'Q2', 'Q3', 'Q4']
-heatmap_cmap = plt.get_cmap(heatmap_cmap_name)
-heatmap_norm = mcolors.TwoSlopeNorm(vmin=heatmap_vmin, vcenter=heatmap_vcenter, vmax=heatmap_vmax)
+effect_quartile_colors = ['#CC79A7', '#E69F00', '#009E73', '#0072B2']
 
-quartile_sample_values = np.linspace(
-    heatmap_vmin,
-    heatmap_vmax,
-    len(effect_quartile_order),
-)
-effect_quartile_palette = {
-    quartile: heatmap_cmap(heatmap_norm(sample_value))
-    for quartile, sample_value in zip(effect_quartile_order, quartile_sample_values)
-}
+effect_quartile_palette = dict(zip(effect_quartile_order, effect_quartile_colors))
 
 # Effect heatmap (rows are mutation types, columns are positions).
 heatmap_df_effect = (
@@ -145,21 +136,69 @@ cg.figure.legend(handles, labels, loc="lower left", bbox_to_anchor=(0.02, 0.02),
 cg.savefig(f"{plot_dir}/fig3a_abundance_heatmap_with_metadata.pdf", bbox_inches="tight")
 plt.close(cg.figure)
 
-
-position_scores = scores_abund.drop_duplicates(subset=['resi_mut'])
-quartile_positions = position_scores['pos_effect'].quantile([0.25, 0.5, 0.75])
-
 # Make a single KDE plot for pos_effect
+position_scores = scores_abund.drop_duplicates(subset=['resi_mut'])
+
+quartile_positions = (
+    position_scores["pos_effect"]
+    .quantile([0.25, 0.50, 0.75])
+    .to_numpy()
+)
+
 fig, ax = plt.subplots(figsize=(20, 10))
-sns.kdeplot(x='pos_effect', data=position_scores, ax=ax, fill=True)
-# draw vertical lines at the quartile positions
-for quartile in quartile_positions:
-    ax.axvline(x=quartile, color='black', linestyle='--')
-# remove upper right hand corner of plot
-ax.spines['right'].set_visible(False)
-ax.spines['top'].set_visible(False)
-plt.savefig(f'{plot_dir}/fig3b_pos_effect_kde.pdf')
+
+# Calculate KDE, but do not display its line
+sns.kdeplot(
+    x="pos_effect",
+    data=position_scores,
+    ax=ax,
+    fill=False,
+    color="none",
+)
+
+kde_line = ax.lines[0]
+x_kde = kde_line.get_xdata()
+y_kde = kde_line.get_ydata()
+
+# Add the exact quartile x-values to the KDE grid
+x_fill = np.sort(np.unique(np.concatenate([x_kde, quartile_positions])))
+
+# Interpolate KDE heights at the expanded x-grid
+y_fill = np.interp(x_fill, x_kde, y_kde)
+
+# Region boundaries
+bounds = [
+    x_fill.min(),
+    *quartile_positions,
+    x_fill.max(),
+]
+
+# Fill intervals with identical shared boundaries
+for left, right, color in zip(bounds[:-1], bounds[1:], effect_quartile_colors):
+    mask = (x_fill >= left) & (x_fill <= right)
+
+    ax.fill_between(
+        x_fill[mask],
+        0,
+        y_fill[mask],
+        facecolor=color,
+        edgecolor="none",
+        linewidth=0,
+        antialiased=False,
+    )
+
+ax.spines["right"].set_visible(False)
+ax.spines["top"].set_visible(False)
+
+ax.set_xlabel("Mean effect")
+ax.set_ylabel("Density")
+
+plt.savefig(
+    f"{plot_dir}/fig3b_pos_effect_kde.pdf",
+    bbox_inches="tight",
+)
 plt.close()
+
 
 # Show location of Q1, Q2, Q3, Q4 positions on the structure for 3c
 output_df = scores_abund.drop_duplicates(subset=['chain', 'resi_struct', 'resn_struct'])

@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+plt.rcParams['font.family'] = 'Arial'
+plt.rcParams['pdf.fonttype'] = 42
+
 
 @dataclass(frozen=True)
 class ClassificationRule:
@@ -21,7 +24,7 @@ PALETTE = {
     "Residue context": "#72B7B2",
     "Residue bonds": "#F58518",
     "Amino acid sequence-derived": "#54A24B",
-    "Spatial averages": "#F58518",
+    "Spatial averages": "#FFB90F",
     "Unclassified": "#9D9D9D",
 }
 
@@ -164,11 +167,6 @@ RULES = [
         prefixes=("ss_domain_log2",),
     ),
     ClassificationRule(
-        group="Spatial averages",
-        subcategory="Secondary structure feature averages",
-        prefixes=("ss_domain_",),
-    ),
-    ClassificationRule(
         group="Residue context",
         subcategory="Secondary structure labels",
         exact_names=frozenset({"ss_group", "ss_domains"}),
@@ -185,24 +183,152 @@ RULES = [
     ),
     ClassificationRule(
         group="Residue context",
-        subcategory="Neighboring residue diversity",
+        subcategory="Neighb. residue diversity",
         exact_names=frozenset({"neighbor_aa_entropy", "neighbor_aa_group_entropy"}),
     ),
     ClassificationRule(
         group="Residue context",
-        subcategory="Neighborhood secondary structure composition",
+        subcategory="Neighb. SS composition",
         exact_names=frozenset({"secondary_structure_coarse_entropy", "secondary_structure_granular_entropy", "neighbor_prop_alpha_helix", "neighbor_prop_beta_sheet", "neighbor_prop_coil"}),
     ),
     ClassificationRule(
         group="Spatial averages",
-        subcategory="Neighborhood feature averages",
-        prefixes=("neighborhood_",),
+        subcategory="Neighb. avg bonds",
+        exact_names=frozenset({
+            "neighborhood_bb_hbond_count",
+            "neighborhood_cation_pi_count",
+            "neighborhood_disulfide_bond_count",
+            "neighborhood_dssp_acc",
+            "neighborhood_dssp_alpha",
+            "neighborhood_dssp_kappa",
+            "neighborhood_dssp_nh_o_1_energy",
+            "neighborhood_dssp_nh_o_1_relidx",
+            "neighborhood_dssp_o_nh_2_energy",
+            "neighborhood_dssp_o_nh_2_relidx",
+            "neighborhood_dssp_nh_o_2_energy",
+            "neighborhood_dssp_nh_o_2_relidx",
+            "neighborhood_dssp_o_nh_1_energy",
+            "neighborhood_dssp_o_nh_1_relidx",
+            "neighborhood_dssp_phi",
+            "neighborhood_dssp_psi",
+            "neighborhood_dssp_tco",
+            "neighborhood_ionic_bond_count",
+            "neighborhood_kyte_doolittle",
+            "neighborhood_pi_stacking_count",
+            "neighborhood_salt_bridge_count",
+            "neighborhood_sc_hbond_count",
+            "neighborhood_total_between_chain_bonds",
+            "neighborhood_total_bond_count",
+            "neighborhood_total_hbond_count",
+            "neighborhood_total_within_chain_bonds",
+            "neighborhood_vdw_contact_count",
+            }
+        ),
+    ),
+
+    ClassificationRule(
+        group="Spatial averages",
+        subcategory="Neighb. avg mutational effects",
+        exact_names=frozenset({
+            "neighborhood_avg_effect",
+            "neighborhood_blosum90",
+            "neighborhood_effect",
+            "neighborhood_effect_ranking",
+            "neighborhood_effect_variance",
+            "neighborhood_effect_variance_rank",
+            "neighborhood_phat_score",
+        }),
     ),
     ClassificationRule(
+        group="Spatial averages",
+        subcategory="Neighb. avg context",
+        exact_names=frozenset({
+            "neighborhood_distance_from_membrane_edge",
+            "neighborhood_distance_to_center_of_mass",
+            "neighborhood_distance_to_nearest_surface_residue",
+            "neighborhood_packing_contact_density",
+            "neighborhood_packing_n_atoms",
+            "neighborhood_packing_n_neighbor_residues",
+            "neighborhood_sasa",
+            "neighborhood_sasa_backbone",
+            "neighborhood_sasa_nonpolar",
+            "neighborhood_sasa_polar",
+            "neighborhood_sasa_sidechain",
+        }),
+    ),
+
+    ClassificationRule(
+        group="Spatial averages",
+        subcategory="SS avg bonds",
+        exact_names=frozenset({
+            "ss_domain_bb_hbond_count",
+            "ss_domain_cation_pi_count",
+            "ss_domain_disulfide_bond_count",
+            "ss_domain_dssp_acc",
+            "ss_domain_dssp_alpha",
+            "ss_domain_dssp_kappa",
+            "ss_domain_dssp_nh_o_1_energy",
+            "ss_domain_dssp_nh_o_1_relidx",
+            "ss_domain_dssp_o_nh_2_energy",
+            "ss_domain_dssp_o_nh_2_relidx",
+            "ss_domain_dssp_phi",
+            "ss_domain_dssp_psi",
+            "ss_domain_dssp_tco",
+            "ss_domain_ionic_bond_count",
+            "ss_domain_kyte_doolittle",
+            "ss_domain_pi_stacking_count",
+            "ss_domain_salt_bridge_count",
+            "ss_domain_sc_hbond_count",
+            "ss_domain_total_between_chain_bonds",
+            "ss_domain_total_bond_count",
+            "ss_domain_total_hbond_count",
+            "ss_domain_total_within_chain_bonds",
+            "ss_domain_vdw_contact_count",
+            "ss_domain_dssp_nh_o_2_energy",
+            "ss_domain_dssp_nh_o_2_relidx",
+            "ss_domain_dssp_o_nh_1_energy",
+            "ss_domain_dssp_o_nh_1_relidx",
+            }
+        ),
+    ),
+
+    ClassificationRule(
+        group="Spatial averages",
+        subcategory="SS avg mutational effects",
+        exact_names=frozenset({
+            "ss_domain_avg_effect",
+            "ss_domain_blosum90",
+            "ss_domain_effect",
+            "ss_domain_effect_ranking",
+            "ss_domain_effect_variance",
+            "ss_domain_effect_variance_rank",
+            "ss_domain_phat_score",
+        }),
+    ),
+    ClassificationRule(
+        group="Spatial averages",
+        subcategory="SS avg context",
+        exact_names=frozenset({
+            "ss_domain_distance_from_membrane_edge",
+            "ss_domain_distance_to_center_of_mass",
+            "ss_domain_distance_to_nearest_surface_residue",
+            "ss_domain_packing_contact_density",
+            "ss_domain_packing_n_atoms",
+            "ss_domain_packing_n_neighbor_residues",
+            "ss_domain_sasa",
+            "ss_domain_sasa_backbone",
+            "ss_domain_sasa_nonpolar",
+            "ss_domain_sasa_polar",
+            "ss_domain_sasa_sidechain",
+        }),
+    ),
+
+    ClassificationRule(
         group="Residue context",
-        subcategory="Sequence distance of neighboring residues",
+        subcategory="Sequence dist of neighb. residues",
         exact_names=frozenset({"prop_long_range_neighbors", "mean_neighbor_sequence_distance"}),
     ),
+
     ClassificationRule(
         group="Residue bonds",
         subcategory="Graph-based connectivity",
@@ -265,6 +391,17 @@ def aggregate_counts(assignments_df: pd.DataFrame) -> pd.DataFrame:
     return counts_df
 
 
+
+GROUP_ORDER = [
+        "Amino acid sequence-derived",
+        "Residue bonds",
+        "Residue context",
+        "Spatial averages",
+        "Mutational effects",
+        "Unclassified",
+]
+
+
 def plot_grouped_horizontal_bars(
     counts_df: pd.DataFrame,
     title: str,
@@ -275,7 +412,7 @@ def plot_grouped_horizontal_bars(
 
     if ax is None:
         fig_height = max(6.0, len(counts_df) * 0.5 + 1.5)
-        fig, ax = plt.subplots(figsize=(13, fig_height))
+        fig, ax = plt.subplots(figsize=(7, fig_height))
     else:
         fig = ax.figure
 
@@ -284,8 +421,8 @@ def plot_grouped_horizontal_bars(
         x="feature_count",
         y="subcategory",
         hue="group",
+        hue_order=GROUP_ORDER,
         order=counts_df["subcategory"].tolist(),
-        hue_order=counts_df["group"].drop_duplicates().tolist(),
         palette=PALETTE,
         dodge=False,
         ax=ax,
@@ -304,6 +441,10 @@ def build_feature_hierarchy_data(
     feature_columns = extract_feature_columns(scores_df)
     assignments_df = build_assignment_dataframe(feature_columns, rules=rules)
     counts_df = aggregate_counts(assignments_df)
+
+    group_rank = {g: i for i, g in enumerate(GROUP_ORDER)}
+    counts_df["_group_rank"] = counts_df["group"].map(group_rank)
+    counts_df = counts_df.sort_values(["_group_rank", "feature_count"], ascending=[True, False])
     return assignments_df, counts_df
 
 
@@ -313,5 +454,5 @@ assignments_df, counts_df = build_feature_hierarchy_data(scores, rules=RULES)
 fig, ax = plot_grouped_horizontal_bars(counts_df, title="Feature hierarchy")
 
 
-fig.savefig(f'{save_dir}/feature_hierarchy1.png')
+fig.savefig(f'{save_dir}/feature_hierarchy2.pdf')
 plt.close(fig)
